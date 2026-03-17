@@ -955,6 +955,17 @@
                         <span class="tooltip">Aumenta el atributo de los jugadores para disputar partidos más justos contra equipos que ya tienen experiencia.</span>
                     </span>
                 </div>
+
+                <div class="checkbox-container">
+                    <label class="checkbox-label">
+                        <input class="custom-checkbox circular" id="inflar-atributos-x2" type="checkbox" />
+                        Inflar atributos x2
+                    </label>
+                    <span class="info-icon">
+                        <em class="fas fa-info-circle"></em>
+                        <span class="tooltip">Aumenta el atributo principal en 2 puntos y los secundarios (excepto 1) en 1 punto. Para porteros, solo aumenta el principal.</span>
+                    </span>
+                </div>
             </div>
 
             <div id="custom-convocatoria-section" class="custom-convocatoria-section">
@@ -1194,6 +1205,7 @@ DFC
         const downloadAmbosBtn = document.getElementById('download-ambos');
         const convocatoriaCheckbox = document.getElementById('convocatoria-25');
         const inflarAtributosCheckbox = document.getElementById('inflar-atributos');
+        const inflarAtributosX2Checkbox = document.getElementById('inflar-atributos-x2'); // Nuevo checkbox
         const convocatoriaPersonalizadaCheckbox = document.getElementById('convocatoria-personalizada');
         const customConvocatoriaSection = document.getElementById('custom-convocatoria-section');
         const gkCountSelect = document.getElementById('gk-count');
@@ -1453,6 +1465,15 @@ DFC
             if (num >= 81 && num <= 85) return 4;
             if (num >= 86 && num <= 90) return 5;
             if (num > 90) return 6;
+            return 0;
+        }
+
+        // Nueva función para obtener el índice del atributo principal según la posición
+        function getPrimaryIndex(position) {
+            if (position === 'GK') return 0;
+            if (['LB', 'CB', 'RB'].includes(position)) return 1;
+            if (['CDM', 'LM', 'CM', 'RM', 'CAM'].includes(position)) return 2;
+            if (['LW', 'ST', 'RW'].includes(position)) return 3;
             return 0;
         }
 
@@ -1798,6 +1819,22 @@ DFC
             });
         }
 
+        function inflateAttributesX2(attributes, position) {
+            let primaryIdx = getPrimaryIndex(position);
+            return attributes.map((attr, idx) => {
+                if (idx === primaryIdx) {
+                    return attr + 2; // principal +2
+                } else {
+                    // secundarios
+                    if (position === 'GK') {
+                        return attr; // porteros: secundarios no cambian
+                    } else {
+                        return attr > 1 ? attr + 1 : attr; // secundarios +1 si >1
+                    }
+                }
+            });
+        }
+
         function renderOutput() {
             let playersByPosition = JSON.parse(JSON.stringify(originalPlayersByPosition));
 
@@ -1812,7 +1849,7 @@ DFC
                 let allPlayers = [];
                 for (const position in playersByPosition) {
                     playersByPosition[position].forEach(player => {
-                        const primaryAttrIndex = { 'GK': 0, 'LB': 1, 'CB': 1, 'RB': 1, 'CDM': 2, 'LM': 2, 'CM': 2, 'RM': 2, 'CAM': 2, 'LW': 3, 'RW': 3, 'ST': 3 }[position];
+                        const primaryAttrIndex = getPrimaryIndex(position);
                         const primaryAttr = player.attributes[primaryAttrIndex];
                         const otherAttrsSum = player.attributes.reduce((sum, val, idx) => idx !== primaryAttrIndex ? sum + val : sum, 0);
                         allPlayers.push({ ...player, position, category: positionToCategory[position], primaryAttr, otherAttrsSum });
@@ -1830,7 +1867,7 @@ DFC
                 });
                 positionOrder.forEach(position => { playersByPosition[position] = []; });
                 Object.values(selectedPlayers).flat().forEach(player => {
-                    playersByPosition[player.position].push({ name: player.name, line: player.line, nationality: player.nationality, attributes: player.attributes, primaryAttr: player.primaryAttr });
+                    playersByPosition[player.position].push({ name: player.name, line: player.line, nationality: player.nationality, attributes: player.attributes, primaryAttr: player.primaryAttr, position: player.position });
                 });
             } else if (convocatoriaPersonalizadaCheckbox.checked) {
                 const gkCount = parseInt(gkCountSelect.value) || originalPlayersByPosition['GK'].length;
@@ -1851,7 +1888,7 @@ DFC
                 const fwPlayers = filterByCategory(['LW', 'ST', 'RW'], fwCount);
 
                 positionOrder.forEach(position => { playersByPosition[position] = []; });
-                gkPlayers.forEach(player => playersByPosition['GK'].push(player));
+                gkPlayers.forEach(player => playersByPosition['GK'].push({ ...player, position: 'GK' }));
                 dfPlayers.forEach(player => playersByPosition[player.position].push(player));
                 mfPlayers.forEach(player => playersByPosition[player.position].push(player));
                 fwPlayers.forEach(player => playersByPosition[player.position].push(player));
@@ -1876,7 +1913,12 @@ DFC
             positionOrder.forEach(position => {
                 playersByPosition[position].forEach(player => {
                     let attributes = player.attributes;
-                    if (inflarAtributosCheckbox.checked) attributes = inflateAttributes(attributes);
+                    // Aplicar inflado según checkboxes: x2 tiene prioridad
+                    if (inflarAtributosX2Checkbox.checked) {
+                        attributes = inflateAttributesX2(attributes, player.position);
+                    } else if (inflarAtributosCheckbox.checked) {
+                        attributes = inflateAttributes(attributes);
+                    }
                     outputLines.push(`${player.name}\t${attributes.join('\t')}`);
                 });
             });
@@ -1895,6 +1937,8 @@ DFC
                 const nationality = getNationalityForPlayer(playerName);
 
                 let processedName = playerName.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                // Reemplazar ı por i
+                processedName = processedName.replace(/ı/g, 'i');
                 processedName = processedName.replace(/[^a-zA-Z\s-]/g, match => {
                     switch (match) {
                         case 'Ø': return 'O';
@@ -2264,6 +2308,7 @@ MC
             convocatoriaCheckbox.disabled = true;
             convocatoriaPersonalizadaCheckbox.checked = false;
             inflarAtributosCheckbox.checked = false;
+            inflarAtributosX2Checkbox.checked = false;
             customConvocatoriaSection.classList.remove('show');
         });
 
@@ -2298,6 +2343,7 @@ MC
         mfCountSelect.addEventListener('change', function () { if (outputArea.value) renderOutput(); });
         fwCountSelect.addEventListener('change', function () { if (outputArea.value) renderOutput(); });
         inflarAtributosCheckbox.addEventListener('change', function () { if (outputArea.value) renderOutput(); });
+        inflarAtributosX2Checkbox.addEventListener('change', function () { if (outputArea.value) renderOutput(); });
 
         mainTitle.addEventListener('click', function () { location.reload(); });
     });
