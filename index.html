@@ -307,7 +307,18 @@
         .custom-select { background: white; color: #333; border: 1px solid #ddd; border-radius: 4px; padding: 6px 10px; }
 
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); }
-        .modal-content { background: white; margin: 10% auto; padding: 30px; border-radius: 10px; width: 90%; max-width: 600px; text-align: left; max-height: 80vh; display: flex; flex-direction: column; }
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 700px;
+            text-align: left;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+        }
         .modal h2 { color: #333; margin-bottom: 15px; }
         .modal .modal-body { overflow-y: auto; flex: 1; padding-right: 10px; }
         .modal .modal-body ul { list-style: none; padding: 0; }
@@ -335,12 +346,84 @@
         }
 
         .pin-input { width: 100%; padding: 14px; margin: 20px 0; background: #f9f9f9; border: 1px solid #ddd; border-radius: 6px; font-size: 1.2rem; text-align: center; letter-spacing: 8px; font-family: monospace; }
-        .modal-buttons { display: flex; gap: 12px; justify-content: center; margin-top: 20px; }
-        .modal-btn { padding: 10px 26px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; }
+        .modal-buttons { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; flex-wrap: wrap; }
+        .modal-btn { padding: 10px 26px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
         .modal-btn.submit { background: #4a6fa5; color: white; }
         .modal-btn.cancel { background: #f5f5f5; color: #666; border: 1px solid #ddd; }
+        .modal-btn.submit:hover { background: #3d5c8a; }
+        .modal-btn.cancel:hover { background: #eee; }
         .error-message { color: #f44336; margin-top: 10px; font-size: 0.9rem; }
         .lockout-message { color: #ff9800; margin-top: 15px; font-size: 0.9rem; background: #fff9f0; padding: 10px; border-radius: 6px; border: 1px solid #ffecc7; }
+
+        .abbrev-row {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+            gap: 15px;
+        }
+        .abbrev-row .team-name {
+            flex: 1;
+            font-weight: 500;
+            color: #333;
+            min-width: 120px;
+        }
+        .abbrev-row .abbrev-input {
+            flex: 0 0 120px;
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: box-shadow 0.2s;
+        }
+        .abbrev-row .abbrev-input:focus {
+            outline: none;
+            border-color: #4a6fa5;
+            box-shadow: 0 0 0 2px rgba(74,111,165,0.1);
+        }
+        .abbrev-row .abbrev-input.duplicate {
+            border-color: #e74c3c !important;
+            box-shadow: 0 0 0 2px rgba(231,76,60,0.3) !important;
+        }
+        .abbrev-row .abbrev-input.conflict {
+            border-color: #e67e22 !important;
+            box-shadow: 0 0 0 2px rgba(230,126,34,0.3) !important;
+        }
+        .abbrev-hint {
+            font-size: 0.8rem;
+            color: #999;
+            margin-top: 4px;
+        }
+        .copy-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        .copy-btn-custom {
+            padding: 8px 18px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: white;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .copy-btn-custom:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+        .copy-btn-teams { background: #3498db; }
+        .copy-btn-teams:hover { background: #2980b9; }
+        .copy-btn-league { background: #2ecc71; }
+        .copy-btn-league:hover { background: #27ae60; }
+        .copy-btn-data { background: #e67e22; }
+        .copy-btn-data:hover { background: #d35400; }
 
         @media (max-width: 768px) {
             .page-header h1 { font-size: 1.8rem; }
@@ -350,6 +433,11 @@
             .checkboxes-wrapper { flex-direction: column; }
             .custom-convocatoria-selects { flex-direction: column; }
             .massive-mode-container { flex-direction: column; align-items: flex-start; }
+            .abbrev-row { flex-wrap: wrap; }
+            .abbrev-row .abbrev-input { flex: 1; min-width: 100px; }
+            .modal-content { margin: 2% auto; width: 95%; padding: 20px; }
+            .modal-buttons { flex-direction: column; align-items: stretch; }
+            .copy-buttons { flex-direction: column; }
         }
     </style>
 </head>
@@ -517,6 +605,24 @@ DFC
     </div>
 </div>
 
+<!-- Modal Abreviaciones -->
+<div class="modal" id="modal-abreviaciones">
+    <div class="modal-content" style="max-width: 750px;">
+        <h2><em class="fas fa-tag"></em> Abreviaciones y otros datos</h2>
+        <p style="margin-bottom: 10px;">Revisa y modifica las abreviaciones que se usarán para nombrar los archivos:</p>
+        <div id="abreviaciones-list" style="max-height: 350px; overflow-y: auto; margin: 10px 0;"></div>
+        <div class="copy-buttons">
+            <button id="copy-teams-btn" class="copy-btn-custom copy-btn-teams"><em class="fas fa-copy"></em> Copiar 'Teams'</button>
+            <button id="copy-league-btn" class="copy-btn-custom copy-btn-league"><em class="fas fa-copy"></em> Copiar 'League'</button>
+            <button id="copy-data-btn" class="copy-btn-custom copy-btn-data"><em class="fas fa-copy"></em> Copiar 'Team Data'</button>
+        </div>
+        <div class="modal-buttons">
+            <button id="abreviaciones-cancel" class="modal-btn cancel">Cancelar</button>
+            <button id="abreviaciones-download" class="modal-btn submit">Descargar</button>
+        </div>
+    </div>
+</div>
+
 <!-- Modal PIN -->
 <div class="modal" id="pin-modal">
     <div class="modal-content">
@@ -593,6 +699,15 @@ DFC
         const incidenciasBody = document.getElementById('incidencias-body');
         const incidenciasClose = document.getElementById('incidencias-close');
 
+        // Modal abreviaciones
+        const abreviacionesModal = document.getElementById('modal-abreviaciones');
+        const abreviacionesList = document.getElementById('abreviaciones-list');
+        const abreviacionesCancel = document.getElementById('abreviaciones-cancel');
+        const abreviacionesDownload = document.getElementById('abreviaciones-download');
+        const copyTeamsBtn = document.getElementById('copy-teams-btn');
+        const copyLeagueBtn = document.getElementById('copy-league-btn');
+        const copyDataBtn = document.getElementById('copy-data-btn');
+
         const pinModal = document.getElementById('pin-modal');
         const pinInput = document.getElementById('pin-input');
         const pinSubmit = document.getElementById('pin-submit');
@@ -600,6 +715,36 @@ DFC
         const pinError = document.getElementById('pin-error');
         const lockoutMsg = document.getElementById('lockout-message');
         let lockoutTimer = null;
+
+        let pendingDownloadCallback = null;
+        let abbreviationDB = {}; // mapa: abreviatura -> nombre (de la base de datos)
+
+        // Cargar base de datos de abreviaciones
+        async function loadAbbreviationDB() {
+            try {
+                const resp = await fetch('https://www.tusoccermanager.com/h95-teamabbreviationdb-html');
+                const txt = await resp.text();
+                // Parsear líneas como "Nombre: abv"
+                const lines = txt.split('\n');
+                const db = {};
+                lines.forEach(line => {
+                    const trimmed = line.trim();
+                    if (trimmed.includes(':')) {
+                        const parts = trimmed.split(':');
+                        if (parts.length >= 2) {
+                            const name = parts[0].trim();
+                            const abbr = parts.slice(1).join(':').trim();
+                            if (abbr) db[abbr.toUpperCase()] = name;
+                        }
+                    }
+                });
+                abbreviationDB = db;
+            } catch(e) {
+                console.warn('No se pudo cargar la base de datos de abreviaciones:', e);
+                abbreviationDB = {};
+            }
+        }
+        await loadAbbreviationDB();
 
         function showPinModal(onSuccess) {
             pinInput.value = ''; pinError.textContent = ''; lockoutMsg.style.display = 'none';
@@ -643,7 +788,7 @@ DFC
 
         let allPlayersByPosition = {};
         let originalPlayersByPosition = {};
-        let allSquads = {};
+        let allSquads = {}; // clave -> { originalName, playersByPosition }
         let isMassiveMode = false;
         let isMassiveClubsMode = false;
 
@@ -655,7 +800,7 @@ DFC
             let omittedChars = [];
             let processed = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             processed = processed.replace(/ı/g, 'i');
-            processed = processed.replace(/[^a-zA-Z\s-]/g, match => {
+            processed = processed.replace(/[^a-zA-Z\s'-]/g, match => {
                 let repl = '';
                 switch (match) {
                     case 'Ø': repl = 'O'; break;
@@ -715,14 +860,14 @@ DFC
             return { line, omittedChars };
         }
 
-        // --- Parseo de entrada (modificado para capturar club) ---
+        // --- Parseo de entrada (captura club) ---
         function parseInput(inputText) {
             const lines = inputText.split('\n');
             let allPlayers = [];
             let currentPlayer=null, currentPosition=null, currentNationality=null, currentClub=null;
             let firstAttr=null, secondAttr=null, thirdAttr=null, fourthAttr=null, fifthAttr=null, sixthAttr=null, seventhAttr=null;
             let validCount=0, lineIdx=0, globalIdx=0;
-            let expectingClub = false; // flag para saber si estamos esperando el club después de la nacionalidad
+            let expectingClub = false;
 
             function process() {
                 if (!currentPlayer || !currentPosition) return;
@@ -780,7 +925,6 @@ DFC
                         globalIndex: globalIdx++
                     });
                 }
-                // Resetear flags
                 expectingClub = false;
                 currentClub = null;
             }
@@ -801,17 +945,15 @@ DFC
                 }
                 else if (currentPlayer && !currentNationality && line && lineIdx>0 && /^\D+$/.test(line) && !expectingClub) {
                     currentNationality = line;
-                    expectingClub = true; // la siguiente línea no numérica y no posición será el club
+                    expectingClub = true;
                     lineIdx++;
                 }
                 else if (currentPlayer && expectingClub && line && lineIdx>0 && /^\D+$/.test(line) && !positionCategories[line] && !spanishToEnglish[line]) {
-                    // esta línea es el club
                     currentClub = line;
                     expectingClub = false;
                     lineIdx++;
                 }
                 else if (line && (positionCategories[line] || spanishToEnglish[line])) {
-                    // Si aún estamos esperando club pero no había (club vacío)
                     expectingClub = false;
                     let pos = line; if (spanishToEnglish[pos]) pos = spanishToEnglish[pos];
                     if (positionCategories[pos]) {
@@ -859,7 +1001,7 @@ DFC
             });
         }
 
-        // --- Función para generar texto de una squad (usada en modo masivo y descargas) ---
+        // --- Función para generar texto de una squad ---
         function generateSquadText(squad) {
             let lines = [];
             let omitidosGlobal = [];
@@ -894,7 +1036,6 @@ DFC
             }
             container.style.display = 'inline-block';
             link.classList.add('visible');
-            // Preparar contenido del modal
             let html = '';
             if (duplicates.length) {
                 html += '<h3 style="color:#c0392b;">Nombres duplicados</h3><ul>';
@@ -915,10 +1056,206 @@ DFC
             incidenciasModal.style.display = 'block';
         }
 
-        // Cerrar modal incidencias
-        incidenciasClose.addEventListener('click', () => incidenciasModal.style.display = 'none');
-        window.addEventListener('click', (e) => { if (e.target === incidenciasModal) incidenciasModal.style.display = 'none'; });
-        incidenciasLink.addEventListener('click', () => { incidenciasModal.style.display = 'block'; });
+        // --- Mostrar modal de abreviaciones y ejecutar callback con las nuevas claves ---
+        function showAbreviacionesModal(squadData, callback) {
+            // squadData: array de { originalKey, originalName, currentAbbr }
+            abreviacionesList.innerHTML = '';
+            const inputs = [];
+            squadData.forEach((item, index) => {
+                const row = document.createElement('div');
+                row.className = 'abbrev-row';
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'team-name';
+                nameSpan.textContent = item.originalName;
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'abbrev-input';
+                input.value = item.currentAbbr;
+                input.dataset.index = index;
+                input.dataset.originalKey = item.originalKey;
+                input.dataset.originalName = item.originalName;
+                row.appendChild(nameSpan);
+                row.appendChild(input);
+                abreviacionesList.appendChild(row);
+                inputs.push(input);
+            });
+
+            // Función de validación
+            function validateAll() {
+                const values = inputs.map(inp => inp.value.trim().toUpperCase());
+                const conflicts = new Set();
+                // Detectar duplicados
+                const duplicates = {};
+                values.forEach((v, idx) => {
+                    if (v) {
+                        if (!duplicates[v]) duplicates[v] = [];
+                        duplicates[v].push(idx);
+                    }
+                });
+                const duplicateIndices = new Set();
+                for (const key in duplicates) {
+                    if (duplicates[key].length > 1) {
+                        duplicates[key].forEach(idx => duplicateIndices.add(idx));
+                    }
+                }
+                // Detectar conflictos con base de datos
+                const conflictIndices = new Set();
+                values.forEach((v, idx) => {
+                    if (v && abbreviationDB[v]) {
+                        conflictIndices.add(idx);
+                    }
+                });
+
+                // Aplicar clases
+                inputs.forEach((inp, idx) => {
+                    inp.classList.remove('duplicate', 'conflict');
+                    if (duplicateIndices.has(idx)) inp.classList.add('duplicate');
+                    else if (conflictIndices.has(idx)) inp.classList.add('conflict');
+                });
+
+                // Retornar si hay duplicados
+                const hasDuplicates = duplicateIndices.size > 0;
+                const hasConflicts = conflictIndices.size > 0;
+                return { hasDuplicates, hasConflicts, duplicateIndices, conflictIndices, values };
+            }
+
+            // Validar en cada cambio
+            inputs.forEach(inp => {
+                inp.addEventListener('input', validateAll);
+            });
+
+            // Guardar callback
+            pendingDownloadCallback = (newMap) => {
+                // Validar antes de ejecutar
+                const { hasDuplicates, hasConflicts } = validateAll();
+                if (hasDuplicates) {
+                    alert('Hay abreviaciones duplicadas. Por favor, corrígelas antes de descargar.');
+                    return;
+                }
+                if (hasConflicts) {
+                    const confirmMsg = 'Algunas abreviaciones ya existen en la base de datos. ¿Deseas continuar de todos modos?';
+                    if (!confirm(confirmMsg)) return;
+                }
+                callback(newMap);
+            };
+
+            abreviacionesModal.style.display = 'block';
+            // Enfocar primer input
+            if (inputs.length) setTimeout(() => inputs[0].focus(), 100);
+            // Validación inicial
+            setTimeout(validateAll, 50);
+        }
+
+        // Cerrar modal abreviaciones sin descargar
+        abreviacionesCancel.addEventListener('click', () => {
+            abreviacionesModal.style.display = 'none';
+            pendingDownloadCallback = null;
+        });
+        window.addEventListener('click', (e) => {
+            if (e.target === abreviacionesModal) {
+                abreviacionesModal.style.display = 'none';
+                pendingDownloadCallback = null;
+            }
+        });
+
+        // Botón Descargar en modal abreviaciones
+        abreviacionesDownload.addEventListener('click', () => {
+            // Recoger valores de los inputs
+            const inputs = abreviacionesList.querySelectorAll('.abbrev-input');
+            const newMap = {};
+            inputs.forEach(inp => {
+                const origKey = inp.dataset.originalKey;
+                let val = inp.value.trim().toUpperCase();
+                if (!val) val = 'XXX';
+                newMap[origKey] = val;
+            });
+            // Validar duplicados y conflictos antes de llamar al callback
+            const { hasDuplicates, hasConflicts } = validateAllInputs(inputs);
+            if (hasDuplicates) {
+                alert('Hay abreviaciones duplicadas. Por favor, corrígelas antes de descargar.');
+                return;
+            }
+            if (hasConflicts) {
+                const confirmMsg = 'Algunas abreviaciones ya existen en la base de datos. ¿Deseas continuar de todos modos?';
+                if (!confirm(confirmMsg)) return;
+            }
+            abreviacionesModal.style.display = 'none';
+            if (pendingDownloadCallback) {
+                pendingDownloadCallback(newMap);
+                pendingDownloadCallback = null;
+            }
+        });
+
+        // Función auxiliar para validar inputs (duplicados y conflictos)
+        function validateAllInputs(inputs) {
+            const values = Array.from(inputs).map(inp => inp.value.trim().toUpperCase());
+            const duplicates = {};
+            values.forEach((v, idx) => {
+                if (v) {
+                    if (!duplicates[v]) duplicates[v] = [];
+                    duplicates[v].push(idx);
+                }
+            });
+            let hasDuplicates = false;
+            for (const key in duplicates) {
+                if (duplicates[key].length > 1) { hasDuplicates = true; break; }
+            }
+            let hasConflicts = false;
+            values.forEach(v => {
+                if (v && abbreviationDB[v]) hasConflicts = true;
+            });
+            return { hasDuplicates, hasConflicts };
+        }
+
+        // --- Funciones de copia ---
+        function getAbbrevData() {
+            const inputs = abreviacionesList.querySelectorAll('.abbrev-input');
+            const data = [];
+            inputs.forEach(inp => {
+                const origKey = inp.dataset.originalKey;
+                const abbr = inp.value.trim().toUpperCase() || 'XXX';
+                const origName = inp.dataset.originalName;
+                data.push({ key: origKey, abbr, name: origName });
+            });
+            return data;
+        }
+
+        copyTeamsBtn.addEventListener('click', () => {
+            const data = getAbbrevData();
+            const text = data.map(d => d.abbr + '.txt').join('\n');
+            navigator.clipboard.writeText(text).then(() => alert('¡Lista "Teams" copiada!')).catch(() => alert('No se pudo copiar.'));
+        });
+
+        copyLeagueBtn.addEventListener('click', () => {
+            const data = getAbbrevData();
+            const text = data.map(d => {
+                // Formatear nombre: sin acentos, guiones bajos en lugar de espacios
+                let cleanName = d.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                cleanName = cleanName.replace(/[^a-zA-Z0-9 ]/g, '');
+                cleanName = cleanName.trim().replace(/\s+/g, '_');
+                return `${d.abbr} = ${cleanName}`;
+            }).join('\n');
+            navigator.clipboard.writeText(text).then(() => alert('¡Lista "League" copiada!')).catch(() => alert('No se pudo copiar.'));
+        });
+
+        copyDataBtn.addEventListener('click', () => {
+            const data = getAbbrevData();
+            // Construir tabla con ancho fijo
+            let lines = [];
+            lines.push('Team                                Stadium                                Manager');
+            lines.push('------------------------------------------------------------------------------------------------------------------------');
+            data.forEach(d => {
+                let cleanName = d.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                cleanName = cleanName.replace(/[^a-zA-Z0-9 ]/g, '');
+                cleanName = cleanName.trim().replace(/\s+/g, '_');
+                const team = cleanName.padEnd(35);
+                const stadium = 'Estadio'.padEnd(35);
+                const manager = 'Entrenador';
+                lines.push(`${team} ${stadium} ${manager}`);
+            });
+            const text = lines.join('\n');
+            navigator.clipboard.writeText(text).then(() => alert('¡Lista "Team Data" copiada!')).catch(() => alert('No se pudo copiar.'));
+        });
 
         // --- Renderizado principal ---
         function renderOutput() {
@@ -929,10 +1266,8 @@ DFC
             let allDuplicates = [];
 
             if (isMassiveMode || isMassiveClubsMode) {
-                // Modo masivo (selecciones o clubes)
                 for (const [key, squad] of Object.entries(allSquads)) {
                     let playersByPosition = JSON.parse(JSON.stringify(squad.playersByPosition));
-                    // Aplicar inflado y formateo
                     let lines = [];
                     let omitidos = [];
                     positionOrder.forEach(pos => {
@@ -951,8 +1286,7 @@ DFC
                         });
                     });
 
-                    // Detectar duplicados en este squad
-                    let names = lines.map(l => l.split(' ')[0]); // primer campo es el nombre procesado
+                    let names = lines.map(l => l.split(' ')[0]);
                     let seen = new Set();
                     let dupes = [];
                     names.forEach(n => {
@@ -963,7 +1297,6 @@ DFC
 
                     allOmitted = allOmitted.concat(omitidos.map(o => ({ ...o, squad: key })));
 
-                    // Construir bloque
                     outputText += `${key}\nName         Age Nat St Tk Ps Sh Ag KAb TAb PAb SAb Gam Sub  Min Mom Sav Con Ktk Kps Sht Gls Ass  DP Inj Sus Fit\n----------------------------------------------------------------------------------------------------------------\n`;
                     outputText += lines.join('\n') + '\n\n';
 
@@ -976,11 +1309,9 @@ DFC
                     totalPlayers += Object.values(posCounts).reduce((a,b)=>a+b,0);
                 }
 
-                // Mostrar incidencias en popup
                 showIncidencias(allDuplicates, allOmitted);
 
             } else {
-                // Modo normal
                 let playersByPosition = JSON.parse(JSON.stringify(originalPlayersByPosition));
 
                 if (convocatoriaCheckbox.checked) {
@@ -1016,7 +1347,6 @@ DFC
                     filterCat(['LW','ST','RW'], fwN).forEach(p => playersByPosition[p.position].push(p));
                 }
 
-                // Recoger nombres para duplicados y omitidos
                 let lines = [];
                 let omitidos = [];
                 let names = [];
@@ -1037,7 +1367,6 @@ DFC
                     });
                 });
 
-                // Detectar duplicados
                 let nameCounts = {};
                 names.forEach(n => { nameCounts[n] = (nameCounts[n]||0)+1; });
                 let dupes = Object.keys(nameCounts).filter(n => nameCounts[n] > 1);
@@ -1086,7 +1415,6 @@ DFC
             isMassiveMode = massiveModeCheckbox.checked;
             isMassiveClubsMode = massiveModeClubsCheckbox.checked;
 
-            // Asegurar que no se combinen
             if (isMassiveMode && isMassiveClubsMode) {
                 alert('No se pueden combinar ambos modos masivos. Desactiva uno.');
                 return;
@@ -1117,15 +1445,23 @@ DFC
                     df.slice(0, limit.DF).forEach(p => squad.playersByPosition[p.position].push(p));
                     mf.slice(0, limit.MF).forEach(p => squad.playersByPosition[p.position].push(p));
                     fw.slice(0, limit.FW).forEach(p => squad.playersByPosition[p.position].push(p));
-                    // Sanitizar nombre de grupo para usar como clave
-                    let abbr = group;
+                    // Generar clave (abreviatura) y guardar nombre original
+                    let abbr;
                     if (isMassiveMode) {
                         abbr = (nationalityDatabase[group] || group.slice(0,3).toLowerCase()).toUpperCase();
                     } else {
-                        // Para clubes, usar el nombre del club limpiando caracteres especiales
-                        abbr = group.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9]/g, "_").toUpperCase();
+                        let clean = group.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9]/g, "");
+                        abbr = clean.slice(0,3).toUpperCase() || "XXX";
                     }
-                    allSquads[abbr] = squad;
+                    let finalAbbr = abbr;
+                    let counter = 1;
+                    while (allSquads[finalAbbr]) {
+                        finalAbbr = abbr + counter++;
+                    }
+                    allSquads[finalAbbr] = {
+                        originalName: group,
+                        playersByPosition: squad.playersByPosition
+                    };
                 });
                 originalPlayersByPosition = null;
                 convocatoriaCheckbox.disabled = true;
@@ -1159,18 +1495,43 @@ DFC
             backBtn.style.display = 'block';
         }
 
-        // --- Descargas y utilidades ---
+        // --- Funciones de descarga con modal de abreviaciones ---
+        function performDownload(callback) {
+            // callback recibe un objeto que mapea clave original -> nueva abreviatura
+            if (isMassiveMode || isMassiveClubsMode) {
+                // Preparar datos para el modal
+                const squadData = Object.entries(allSquads).map(([key, squad]) => {
+                    let clean = squad.originalName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z]/g, "");
+                    let defaultAbbr = clean.slice(0,3).toUpperCase() || "XXX";
+                    return {
+                        originalKey: key,
+                        originalName: squad.originalName,
+                        currentAbbr: defaultAbbr
+                    };
+                });
+                showAbreviacionesModal(squadData, (newMap) => {
+                    callback(newMap);
+                });
+            } else {
+                const fn = prompt('Abreviación del equipo:');
+                if (fn) callback({ 'default': fn });
+            }
+        }
+
         async function downloadPlantilla() {
             if (isMassiveMode || isMassiveClubsMode) {
-                const zip = new JSZip();
-                for (const [abbr, squad] of Object.entries(allSquads)) {
-                    const { content } = generateSquadText(squad);
-                    zip.file(abbr + '.txt', content);
-                }
-                const blob = await zip.generateAsync({type:"blob"});
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = 'plantillas.zip'; a.click();
+                performDownload(async (newMap) => {
+                    const zip = new JSZip();
+                    for (const [key, squad] of Object.entries(allSquads)) {
+                        const newKey = newMap[key] || key;
+                        const { content } = generateSquadText(squad);
+                        zip.file(newKey + '.txt', content);
+                    }
+                    const blob = await zip.generateAsync({type:"blob"});
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = 'plantillas.zip'; a.click();
+                });
             } else {
                 const fn = prompt('Abreviación del equipo:');
                 if (!fn) return;
@@ -1182,23 +1543,26 @@ DFC
 
         async function downloadAlineaciones() {
             if (isMassiveMode || isMassiveClubsMode) {
-                const zip = new JSZip();
-                for (const [abbr, squad] of Object.entries(allSquads)) {
-                    const { content: squadText } = generateSquadText(squad);
-                    try {
-                        const players = parseSquad(squadText);
-                        const tactic = getRandomTactic(players);
-                        const formation = getRandomFormation();
-                        const agg = Math.floor(Math.random()*6)+10;
-                        const lineup = createLineup(players, formation, tactic);
-                        const lineupText = formatLineup(abbr, lineup, tactic, agg, formation);
-                        zip.file(abbr + 'sht.txt', lineupText);
-                    } catch(e) { console.error('Error al crear alineación para '+abbr, e); }
-                }
-                const blob = await zip.generateAsync({type:"blob"});
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = 'alineaciones.zip'; a.click();
+                performDownload(async (newMap) => {
+                    const zip = new JSZip();
+                    for (const [key, squad] of Object.entries(allSquads)) {
+                        const newKey = newMap[key] || key;
+                        const { content: squadText } = generateSquadText(squad);
+                        try {
+                            const players = parseSquad(squadText);
+                            const tactic = getRandomTactic(players);
+                            const formation = getRandomFormation();
+                            const agg = Math.floor(Math.random()*6)+10;
+                            const lineup = createLineup(players, formation, tactic);
+                            const lineupText = formatLineup(newKey, lineup, tactic, agg, formation);
+                            zip.file(newKey + 'sht.txt', lineupText);
+                        } catch(e) { console.error('Error al crear alineación para '+key, e); }
+                    }
+                    const blob = await zip.generateAsync({type:"blob"});
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = 'alineaciones.zip'; a.click();
+                });
             } else {
                 const fn = prompt('Abreviación del equipo:');
                 if (!fn) return;
@@ -1218,24 +1582,27 @@ DFC
 
         async function downloadAmbos() {
             if (isMassiveMode || isMassiveClubsMode) {
-                const zip = new JSZip();
-                for (const [abbr, squad] of Object.entries(allSquads)) {
-                    const { content: squadText } = generateSquadText(squad);
-                    zip.file(abbr + '.txt', squadText);
-                    try {
-                        const players = parseSquad(squadText);
-                        const tactic = getRandomTactic(players);
-                        const formation = getRandomFormation();
-                        const agg = Math.floor(Math.random()*6)+10;
-                        const lineup = createLineup(players, formation, tactic);
-                        const lineupText = formatLineup(abbr, lineup, tactic, agg, formation);
-                        zip.file(abbr + 'sht.txt', lineupText);
-                    } catch(e) { console.error('Error al crear alineación para '+abbr, e); }
-                }
-                const blob = await zip.generateAsync({type:"blob"});
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = 'todo.zip'; a.click();
+                performDownload(async (newMap) => {
+                    const zip = new JSZip();
+                    for (const [key, squad] of Object.entries(allSquads)) {
+                        const newKey = newMap[key] || key;
+                        const { content: squadText } = generateSquadText(squad);
+                        zip.file(newKey + '.txt', squadText);
+                        try {
+                            const players = parseSquad(squadText);
+                            const tactic = getRandomTactic(players);
+                            const formation = getRandomFormation();
+                            const agg = Math.floor(Math.random()*6)+10;
+                            const lineup = createLineup(players, formation, tactic);
+                            const lineupText = formatLineup(newKey, lineup, tactic, agg, formation);
+                            zip.file(newKey + 'sht.txt', lineupText);
+                        } catch(e) { console.error('Error al crear alineación para '+key, e); }
+                    }
+                    const blob = await zip.generateAsync({type:"blob"});
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = 'todo.zip'; a.click();
+                });
             } else {
                 const fn = prompt('Abreviación del equipo:');
                 if (!fn) return;
@@ -1255,6 +1622,23 @@ DFC
                 } catch(e) { alert(e.message); }
             }
         }
+
+        // Botón ZIP específico (solo plantillas)
+        downloadZipBtn.addEventListener('click', async () => {
+            if (!isMassiveMode && !isMassiveClubsMode) return;
+            performDownload(async (newMap) => {
+                const zip = new JSZip();
+                for (const [key, squad] of Object.entries(allSquads)) {
+                    const newKey = newMap[key] || key;
+                    const { content } = generateSquadText(squad);
+                    zip.file(newKey + '.txt', content);
+                }
+                const blob = await zip.generateAsync({type:"blob"});
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'plantillas.zip'; a.click();
+            });
+        });
 
         // --- Funciones de alineación (parseSquad, getRandomTactic, etc.) ---
         function parseSquad(squadText) {
@@ -1401,26 +1785,15 @@ DFC
         });
         pasteBtn.addEventListener('click', async () => { try { inputArea.value = await navigator.clipboard.readText(); } catch { alert('No se pudo pegar'); } });
         copyBtn.addEventListener('click', async () => { try { await navigator.clipboard.writeText(outputArea.value); alert('¡Copiado!'); } catch { alert('No se pudo copiar'); } });
+
+        // Asignar funciones de descarga
         downloadPlantillaBtn.addEventListener('click', downloadPlantilla);
         downloadAlineacionBtn.addEventListener('click', downloadAlineaciones);
         downloadAmbosBtn.addEventListener('click', downloadAmbos);
-        downloadZipBtn.addEventListener('click', async () => {
-            if (!isMassiveMode && !isMassiveClubsMode) return;
-            const zip = new JSZip();
-            for (const [abbr, squad] of Object.entries(allSquads)) {
-                const { content } = generateSquadText(squad);
-                zip.file(abbr + '.txt', content);
-            }
-            const blob = await zip.generateAsync({type:"blob"});
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = 'plantillas.zip'; a.click();
-        });
 
         // Exclusión mutua entre modos masivos
         massiveModeCheckbox.addEventListener('change', function() {
             if (this.checked) massiveModeClubsCheckbox.checked = false;
-            // Si ya hay output, reconvertir
             if (outputArea.value && inputArea.value) doConvert();
         });
         massiveModeClubsCheckbox.addEventListener('change', function() {
