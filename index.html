@@ -1229,7 +1229,6 @@ DFC
         copyLeagueBtn.addEventListener('click', () => {
             const data = getAbbrevData();
             const text = data.map(d => {
-                // Formatear nombre: sin acentos, guiones bajos en lugar de espacios
                 let cleanName = d.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
                 cleanName = cleanName.replace(/[^a-zA-Z0-9 ]/g, '');
                 cleanName = cleanName.trim().replace(/\s+/g, '_');
@@ -1240,7 +1239,6 @@ DFC
 
         copyDataBtn.addEventListener('click', () => {
             const data = getAbbrevData();
-            // Construir tabla con ancho fijo
             let lines = [];
             lines.push('Team                                Stadium                                Manager');
             lines.push('------------------------------------------------------------------------------------------------------------------------');
@@ -1764,7 +1762,22 @@ DFC
             return formatted;
         }
 
-        // --- Eventos ---
+        // --- Eventos de cierre del modal de incidencias (corregido) ---
+        incidenciasClose.addEventListener('click', function(e) {
+            e.stopPropagation();
+            incidenciasModal.style.display = 'none';
+        });
+        window.addEventListener('click', function(e) {
+            if (e.target === incidenciasModal) {
+                incidenciasModal.style.display = 'none';
+            }
+        });
+        incidenciasLink.addEventListener('click', function(e) {
+            e.stopPropagation();
+            incidenciasModal.style.display = 'block';
+        });
+
+        // --- Eventos principales ---
         convertBtn.addEventListener('click', () => isPinVerified ? doConvert() : showPinModal(doConvert));
         backBtn.addEventListener('click', () => {
             document.querySelector('.input-section').style.display = 'block';
