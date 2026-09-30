@@ -932,6 +932,12 @@ DFC
             while (lineIdx < lines.length) {
                 const line = lines[lineIdx].trim();
 
+                // Ignorar líneas "Vote", "Vota" o "Votar"
+                if (line === 'Vote' || line === 'Vota' || line === 'Votar') {
+                    lineIdx++;
+                    continue;
+                }
+
                 if (/^\d+$/.test(line)) {
                     process();
                     currentPlayer=null; currentPosition=null; currentNationality=null; currentClub=null;
