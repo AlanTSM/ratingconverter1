@@ -795,20 +795,46 @@ DFC
         function calculateAttribute(v) { const n=parseInt(v); return n<=40?14:n<=50?15:n<=60?16:n<=70?17:n<=80?18:n<=85?19:20; }
         function getPrimaryIndex(pos) { return pos==='GK'?0:['LB','CB','RB'].includes(pos)?1:['CDM','LM','CM','RM','CAM'].includes(pos)?2:3; }
 
+        // --- Diccionario robusto de transliteración (caracteres que NFD no descompone) ---
+        const specialCharMap = {
+            // Ligaduras tipográficas
+            'ﬀ':'ff','ﬁ':'fi','ﬂ':'fl','ﬃ':'ffi','ﬄ':'ffl','ﬅ':'st','ﬆ':'st',
+            // Nórdicos / germánicos
+            'Ø':'O','ø':'o','Æ':'AE','æ':'ae','Œ':'OE','œ':'oe',
+            'Ð':'D','ð':'d','Þ':'TH','þ':'th','ß':'ss',
+            // Eslavos / balcánicos
+            'Đ':'D','đ':'d','Ł':'L','ł':'l','Ħ':'H','ħ':'h','Ŧ':'T','ŧ':'t',
+            'Ƶ':'Z','ƶ':'z',
+            'Ǆ':'DZ','ǅ':'Dz','ǆ':'dz','Ǳ':'DZ','ǲ':'Dz','ǳ':'dz',
+            'Ǉ':'LJ','ǈ':'Lj','ǉ':'lj','Ǌ':'NJ','ǋ':'Nj','ǌ':'nj',
+            'Ŋ':'N','ŋ':'n',
+            // Turco
+            'ı':'i','ĸ':'k',
+            // Otros
+            'ſ':'s','Ə':'A','ə':'a','ŀ':'l','Ŀ':'L',
+            'Ɨ':'I','ɨ':'i','Ɵ':'O','ɵ':'o','Ʃ':'SH','ʃ':'sh','Ʒ':'ZH','ʒ':'zh',
+            'ʔ':'',
+            // Apóstrofos tipográficos
+            '\u2018':"'",'\u2019':"'",'\u201A':"'",'\u201B':"'",'\u02BC':"'",'\u02BB':"'",
+            // Guiones tipográficos
+            '\u2010':'-','\u2011':'-','\u2012':'-','\u2013':'-','\u2014':'-','\u2015':'-',
+        };
+
         // --- Funciones de formato unificadas ---
         function processName(name) {
             let omittedChars = [];
-            let processed = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            processed = processed.replace(/ı/g, 'i');
+            // Paso 1: transliteración robusta de caracteres que NFD no descompone (Đ, Ø, Ł, etc.)
+            let transliterated = '';
+            for (const ch of name) {
+                transliterated += (specialCharMap[ch] !== undefined) ? specialCharMap[ch] : ch;
+            }
+            // Paso 2: descomposición NFD y eliminación de diacríticos combinantes
+            let processed = transliterated.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            // Paso 3: reemplazo/eliminación de cualquier carácter restante no permitido
             processed = processed.replace(/[^a-zA-Z\s'-]/g, match => {
-                let repl = '';
-                switch (match) {
-                    case 'Ø': repl = 'O'; break;
-                    case 'ø': repl = 'o'; break;
-                    case 'ß': repl = 'ss'; break;
-                    default: repl = ''; omittedChars.push(match); break;
-                }
-                return repl;
+                if (specialCharMap[match] !== undefined) return specialCharMap[match];
+                omittedChars.push(match);
+                return '';
             });
             const nameParts = processed.split(' ');
             let firstName = nameParts[0];
@@ -954,7 +980,8 @@ DFC
                     expectingClub = true;
                     lineIdx++;
                 }
-                else if (currentPlayer && expectingClub && line && lineIdx>0 && /^\D+$/.test(line) && !positionCategories[line] && !spanishToEnglish[line]) {
+                // CAMBIO: se permite que la línea del club contenga dígitos.
+                else if (currentPlayer && expectingClub && line && lineIdx>0 && !positionCategories[line] && !spanishToEnglish[line]) {
                     currentClub = line;
                     expectingClub = false;
                     lineIdx++;
@@ -1454,7 +1481,8 @@ DFC
                     if (isMassiveMode) {
                         abbr = (nationalityDatabase[group] || group.slice(0,3).toLowerCase()).toUpperCase();
                     } else {
-                        let clean = group.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9]/g, "");
+                        // Se ignoran los dígitos al generar la abreviatura (p.ej. "1. FC Köln" -> "FCK").
+                        let clean = group.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z]/g, "");
                         abbr = clean.slice(0,3).toUpperCase() || "XXX";
                     }
                     let finalAbbr = abbr;
